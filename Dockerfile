@@ -1,6 +1,9 @@
-FROM centos/python-35-centos7:latest
+FROM registry.access.redhat.com/ubi8/python-39:latest
 
 USER root
+
+# Install Apache httpd development headers required to build mod_wsgi from source.
+RUN dnf install -y httpd-devel && dnf clean all
 
 COPY . /tmp/src
 
