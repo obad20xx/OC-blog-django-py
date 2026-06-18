@@ -37,20 +37,28 @@ fi
 # pre-load data would need to be run as manual step.
 
 if [ x"$DATABASE_HOST" != x"" ]; then
-    powershift image migrate
+    echo " -----> Running Django database migrations (external DB)."
+    python manage.py migrate --noinput
 else
     if [ x"$DATABASE_URL" != x"" -o -d /opt/app-root/secrets/database ]; then
-        powershift image migrate
+        echo " -----> Running Django database migrations (DATABASE_URL or secrets)."
+        python manage.py migrate --noinput
     else
         if [ -d /opt/app-root/data ]; then
             if [ ! -f /opt/app-root/data/db.sqlite3 ]; then
-               powershift image migrate
+                echo " -----> Running Django database migrations (persistent volume)."
+                python manage.py migrate --noinput
             fi
         else
             if [ ! -f /opt/app-root/src/db.sqlite3 ]; then
-                DJANGO_ADMIN_USERNAME=developer \
-                   DJANGO_ADMIN_EMAIL=developer@example.com \
-                   DJANGO_ADMIN_PASSWORD=developer powershift image setup
+                echo " -----> Running Django database migrations and initial setup."
+                python manage.py migrate --noinput
+                (cat - | python manage.py shell) << !
+from django.contrib.auth.models import User;
+User.objects.create_superuser('developer', 'developer@example.com', 'developer')
+!
+                echo " -----> Pre-loading Django database with blog posts."
+                python manage.py loaddata posts.json
             fi
         fi
     fi
