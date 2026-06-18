@@ -10,10 +10,22 @@ if [ -d /opt/app-root/wheelhouse ]; then
     exec /opt/app-root/s2i/assemble
 fi
 
-# Install 'powershift-cli[image]' package to add support for action hooks.
+# Run the original S2I assemble script.
 
-pip install powershift-cli[image]
+/opt/app-root/s2i/assemble
 
-# Run the build phase with support for action hooks.
+# Run the pre_build action hook if present.
 
-exec powershift image assemble
+if [ -f /opt/app-root/src/.s2i/action_hooks/pre_build ]; then
+    source /opt/app-root/src/.s2i/action_hooks/build_env 2>/dev/null || true
+    echo " -----> Running pre_build action hook."
+    bash /opt/app-root/src/.s2i/action_hooks/pre_build
+fi
+
+# Run the build action hook if present.
+
+if [ -f /opt/app-root/src/.s2i/action_hooks/build ]; then
+    source /opt/app-root/src/.s2i/action_hooks/build_env 2>/dev/null || true
+    echo " -----> Running build action hook."
+    bash /opt/app-root/src/.s2i/action_hooks/build
+fi

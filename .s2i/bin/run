@@ -10,6 +10,14 @@ if [ -d /opt/app-root/wheelhouse ]; then
     exec /opt/app-root/s2i/run
 fi
 
-# Run the deployment phase with support for action hooks.
+# Run the deploy action hook if present.
 
-exec powershift image run
+if [ -f /opt/app-root/src/.s2i/action_hooks/deploy ]; then
+    source /opt/app-root/src/.s2i/action_hooks/deploy_env 2>/dev/null || true
+    echo " -----> Running deploy action hook."
+    bash /opt/app-root/src/.s2i/action_hooks/deploy
+fi
+
+# Run the original S2I run script.
+
+exec /opt/app-root/s2i/run
